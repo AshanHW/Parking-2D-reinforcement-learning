@@ -333,3 +333,6 @@ class Player(pygame.sprite.Sprite):
         self.acceleration = 0.0
         self.steering = 0.0
         self.angle = 0.0
+
+    def getstate(self):
+        return [self.position.x, self.position.y, self.velocity.x, self.velocity.y, self.acceleration, self.steering, self.angle]

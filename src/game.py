@@ -8,6 +8,7 @@
         version: 0.0.1
 """
 import pygame
+import threading
 
 from player import Player
 from map import Map
@@ -17,7 +18,7 @@ from constants import *
 class Game():
     """controls the gameloop and creates some user information screens
     """
-    def __init__(self):
+    def __init__(self, condition):
         """Creates a surface and starts pygame clock
         
         Test:
@@ -26,6 +27,11 @@ class Game():
         """
         self.surface = pygame.display.get_surface()
         self.clock = pygame.time.Clock()
+        self.states = None
+        self.gameOver = None
+        self.goal = None
+        self.action_predictions = None
+        self.condition = condition
     
     def gameLoop(self, player, menu, level):
         """controls the gameloop
@@ -70,10 +76,10 @@ class Game():
         pauseButRect = pauseBut.get_rect()
         pauseButRect.x = PAUSE_BUTTON_X
         pauseButRect.y = PAUSE_BUTTON_Y
-        
+
         while not done:
             dt = self.clock.get_time() / 1000
-            
+
             for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         done = True
@@ -82,34 +88,82 @@ class Game():
                         if pauseButRect.collidepoint(x,y):
                             done, restart = self.pause(pauseBut,pauseButRect)
             
-            pressed = pygame.key.get_pressed()
             
-            # Controlling players acceleration
-            if pressed[pygame.K_w]:
+            # Initial state
+            with self.condition:
+                self.states = player.getstate()
+                logger.info(f"initial states in gameloop{self.states}")
+                self.condition.notify()
+
+                
+            # Get the action predictions from the network
+            # Make sure predictions have been made
+            with self.condition:
+                while self.action_predictions is None:
+                    self.condition.wait()
+
+            logger.info(f"pred actions in gameloop {self.action_predictions}")
+            if self.action_predictions[0] > 0:
                 player.forward(dt)
-            elif pressed[pygame.K_s]:
+                self.action_predictions[0] -= dt
+
+            elif self.action_predictions[1] > 0:
                 player.backward(dt)
-            elif pressed[pygame.K_SPACE]:
+                self.action_predictions[1] -= dt
+
+            elif self.action_predictions[4] > 0:
                 player.emergencyBrake()
-            elif pressed[pygame.K_h]:
-                player.honk()
+                self.action_predictions[4] -= dt
+
             else:
                 player.noAcceleration(dt)
-            
-            # Controlling player heading
-            if pressed[pygame.K_d]:
+
+
+            if self.action_predictions[2] > 0:
                 player.right(dt)
-            elif pressed[pygame.K_a]:
+                self.action_predictions[2] -= dt
+
+            elif self.action_predictions[3] > 0:
                 player.left(dt)
+                self.action_predictions[3] -= dt
+
             else:
                 player.straight()
-            
+
+
+            # resest actions
+            self.action_predictions = None
+
             # cant use sprite group because sprite group doesnt allow return values
-            gameOver, goal = player.update(dt, map.tiles, map.goal)
+            #gameOver, goal = player.update(dt, map.tiles, map.goal)
+
+            with self.condition:
+                gameOver, goal = player.update(dt, map.tiles, map.goal)
+                self.states = player.getstate()
+                self.gameOver = gameOver
+                self.goal = goal
+                logger.info(f"next states in gameloop {self.states}")
+                logger.info(f"Updated goal and gameover: {self.goal, self.gameOver}")
+                self.condition.notify()
+
+            with self.condition:
+                self.condition.wait()
             
             if gameOver == True:
-                done = True
-                self.showGameEnd(0)
+                #done = True
+                #self.showGameEnd(0)
+                
+                """
+                Comment out the showGameEnd method and
+                restart the game when mission is failed.
+                So AI can run many attempts without disruptions.
+                """
+                player.setStart(START_X, START_Y)
+                done = False
+                restart = False
+                logger.info(f"Player restarted the current Level")
+                self.goal = None
+                self.gameOver = None
             elif goal == True:
                 done = True
                 self.showGameEnd(1)
