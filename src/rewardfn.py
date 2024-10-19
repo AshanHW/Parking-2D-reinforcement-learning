@@ -39,7 +39,6 @@ class Reward:
         # Distance penalty
         # Manhattan Distance between the current & target pos
         dis = self.calculate_distance(position)
-        print(dis)
 
         if self.previous_dis is None:
             self.previous_dis = dis

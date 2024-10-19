@@ -4,6 +4,7 @@ Temporary memory buffer
 
 from collections import deque
 import random
+import numpy as np
 
 class MemoryBuffer:
     def __init__(self, max_len):

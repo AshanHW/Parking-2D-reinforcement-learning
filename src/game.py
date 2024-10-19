@@ -92,7 +92,7 @@ class Game():
             # Initial state
             with self.condition:
                 self.states = player.getstate()
-                logger.info(f"initial states in gameloop{self.states}")
+                #logger.info(f"initial states in gameloop{self.states}")
                 self.condition.notify()
 
                 
@@ -100,6 +100,7 @@ class Game():
             # Make sure predictions have been made
             with self.condition:
                 while self.action_predictions is None:
+                    #logger.info("Waiting for actions in gameloop")
                     self.condition.wait()
 
             logger.info(f"pred actions in gameloop {self.action_predictions}")
@@ -142,8 +143,8 @@ class Game():
                 self.states = player.getstate()
                 self.gameOver = gameOver
                 self.goal = goal
-                logger.info(f"next states in gameloop {self.states}")
-                logger.info(f"Updated goal and gameover: {self.goal, self.gameOver}")
+                #logger.info(f"next states in gameloop {self.states}")
+                #logger.info(f"Updated shared goal and gameover in gameloop: {self.goal, self.gameOver}")
                 self.condition.notify()
 
             with self.condition:
@@ -162,8 +163,8 @@ class Game():
                 done = False
                 restart = False
                 logger.info(f"Player restarted the current Level")
-                self.goal = None
-                self.gameOver = None
+                #self.goal = None
+                #self.gameOver = None
             elif goal == True:
                 done = True
                 self.showGameEnd(1)

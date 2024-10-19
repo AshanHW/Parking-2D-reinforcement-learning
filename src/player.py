@@ -294,7 +294,7 @@ class Player(pygame.sprite.Sprite):
         hit = self.collisionDetection(tiles)
         goal = self.checkGoalReach(goal)
 
-        logger.info(f"Velocity:{self.velocity}, Acceleration:{self.acceleration}, Position:{self.position}, Angle:{self.angle}")
+        #logger.info(f"Velocity:{self.velocity}, Acceleration:{self.acceleration}, Position:{self.position}, Angle:{self.angle}")
         return hit, goal
     
     def setImage(self, imagePath):

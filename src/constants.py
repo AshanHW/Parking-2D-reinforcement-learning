@@ -11,7 +11,7 @@ import os
 
 # WINDOW CONSTANTS
 #######################
-FPS = 10
+FPS = 60
 WINDOWSIZE = (800,608)
 LOG_FILE = os.path.join(os.path.dirname( __file__ ),".", "logging", "loggingInfos.log")
 

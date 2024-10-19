@@ -1,14 +1,15 @@
 """
-initialise the the instances from game and AI Agent and start training.
+Run DDPG algorithm.
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 class DDPG:
-    def __init__(self, actor, critic, target_actor, target_critic, buffer, device, gamma=0.99, tau=0.001):
+    def __init__(self, actor, critic, target_actor, target_critic, buffer, device, gamma=0.99, tau=0.005):
 
         self.actor = actor
         self.critic = critic
@@ -21,8 +22,8 @@ class DDPG:
         self.loss_fn = nn.MSELoss()
 
 
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=0.0001)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=0.0001)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=0.00001)
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=0.000001)
 
 
 
@@ -33,6 +34,7 @@ class DDPG:
         # Get samples from buffer
         states, actions, rewards, next_states, dones = self.buffer.sample(batch_size)
 
+        states = np.array(states)
         state_batch = torch.tensor(states, dtype=torch.float32).to(self.device)
         action_batch = torch.tensor(actions, dtype=torch.float32).to(self.device)
         rewards_batch = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
@@ -49,6 +51,7 @@ class DDPG:
 
         # Calculate MSE between current and target
         critic_loss = self.loss_fn(q, target_q)
+        print(critic_loss)
 
 
         # Update parameters of the Critic
