@@ -47,7 +47,7 @@ def train():
             # Predict actions
             action = actor(current_states).detach().cpu().numpy()
             # Add noise
-            if len(buffer.buffer) < 125:
+            if len(buffer.buffer) < 512:
                 #logger.info(f"Adding noise")
                 action += noise.sample()
 
@@ -97,6 +97,7 @@ def train():
                 condition.notify()
 
             if gameOver or goal:
+                logger.info("Game is over")
                 done = True
                 # Jump to the next episode
                 break
@@ -114,11 +115,11 @@ max_episodes = 1000
 batch_size = 128
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-actor = Actor(7,128,128,64,5)
-critic = Critic(7,128,128,64,5,1)
+actor = Actor(7,128,128,64,9)
+critic = Critic(7,128,128,64,9,1)
 
-target_actor = Actor(7,128,128,64,5)
-target_critic = Critic(7,128,128,64,5,1)
+target_actor = Actor(7,128,128,64,9)
+target_critic = Critic(7,128,128,64,9,1)
 
 actor.to(device)
 critic.to(device)
@@ -127,7 +128,7 @@ target_actor.to(device)
 target_critic.to(device)
 
 buffer = MemoryBuffer(1000)
-noise = OUNoise(5)
+noise = OUNoise(9)
 algorithm = DDPG(actor, critic, target_actor, target_critic, buffer, device)
 rewards = []
 #logger.info("ai objects done")

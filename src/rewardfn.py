@@ -46,6 +46,7 @@ class Reward:
         elif self.previous_dis < dis:
             # Higher reward for getting closer than the last time
             self.reward += (self.previous_dis - dis)* self.distance_weight
+            self.previous_dis = dis
 
 
         return self.reward

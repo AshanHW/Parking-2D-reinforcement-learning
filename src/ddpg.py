@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from loguru import logger
 
 
 class DDPG:
@@ -22,7 +23,7 @@ class DDPG:
         self.loss_fn = nn.MSELoss()
 
 
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=0.00001)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=0.000001)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=0.000001)
 
 
@@ -51,13 +52,17 @@ class DDPG:
 
         # Calculate MSE between current and target
         critic_loss = self.loss_fn(q, target_q)
-        print(critic_loss)
+        #print(critic_loss)
 
 
         # Update parameters of the Critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optimizer.step()
+        #with torch.no_grad():
+        #    for param in self.critic.parameters():
+        #        param.clamp(0,1)
 
         # Update parameters of the actor
         pred_actions = self.actor(state_batch)
@@ -66,7 +71,11 @@ class DDPG:
         # Update parameters of the actor
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optimizer.step()
+        #with torch.no_grad():
+        #    for param in self.actor.parameters():
+        #        param.clamp(0,1)
 
 
 

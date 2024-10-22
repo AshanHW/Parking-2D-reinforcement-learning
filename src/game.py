@@ -104,33 +104,50 @@ class Game():
                     self.condition.wait()
 
             logger.info(f"pred actions in gameloop {self.action_predictions}")
+            """
+            9 Possible actions.
+            Left, Right, Forward, F+R, F+L, Backwards, B+R, B+L, Emergency stop
+            """
+
             if self.action_predictions[0] > 0:
-                player.forward(dt)
+                player.left(dt)
                 self.action_predictions[0] -= dt
 
             elif self.action_predictions[1] > 0:
-                player.backward(dt)
+                player.right(dt)
                 self.action_predictions[1] -= dt
 
-            elif self.action_predictions[4] > 0:
-                player.emergencyBrake()
-                self.action_predictions[4] -= dt
-
-            else:
-                player.noAcceleration(dt)
-
-
-            if self.action_predictions[2] > 0:
-                player.right(dt)
+            elif self.action_predictions[2] > 0:
+                player.forward(dt)
                 self.action_predictions[2] -= dt
 
             elif self.action_predictions[3] > 0:
-                player.left(dt)
+                player.forward(dt)
+                player.right(dt)
                 self.action_predictions[3] -= dt
 
-            else:
-                player.straight()
+            elif self.action_predictions[4] > 0:
+                player.forward(dt)
+                player.left(dt)
+                self.action_predictions[4] -= dt
 
+            elif self.action_predictions[5] > 0:
+                player.backward(dt)
+                self.action_predictions[5] -= dt
+
+            elif self.action_predictions[6] > 0:
+                player.forward(dt)
+                player.right(dt)
+                self.action_predictions[6] -= dt
+
+            elif self.action_predictions[7] > 0:
+                player.forward(dt)
+                player.left(dt)
+                self.action_predictions[7] -= dt
+
+            else:
+                player.emergencyBrake()
+                self.action_predictions[8] -= dt
 
             # resest actions
             self.action_predictions = None

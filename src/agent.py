@@ -24,19 +24,32 @@ class Actor(nn.Module):
     def __init__(self, state_dim, hidden1_size, hidden2_size, hidden3_size, action_vector):
         super(Actor, self).__init__()
 
-        # 7x128 > 128x128 > 128x64 > 64x5
+        # 7x128 > 128x128 > 128x64 > 64x9
         self.inputlayer = nn.Linear(in_features=state_dim, out_features=hidden1_size)
         self.hidden1 = nn.Linear(in_features=hidden1_size, out_features=hidden2_size)
         self.hidden2 = nn.Linear(in_features=hidden2_size, out_features=hidden3_size)
         self.outputlayer = nn.Linear(in_features=hidden3_size, out_features=action_vector)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, state):
         x = F.relu(self.inputlayer(state))
         x = F.relu(self.hidden1(x))
+        x = self.dropout(x)
         x = F.relu(self.hidden2(x))
-        output = F.relu(self.outputlayer(x))
+        output = F.tanh(self.outputlayer(x))
+        scaled_output = (output + 1) * 2.5
 
-        return output
+        if len(scaled_output.shape) == 1:  # If single sample
+            max_index = torch.argmax(scaled_output)
+            final_output = torch.zeros_like(scaled_output)
+            final_output[max_index] = scaled_output[max_index]
+
+        else:  # If batch of samples
+            max_index = torch.argmax(scaled_output, dim=1)
+            final_output = torch.zeros_like(scaled_output)
+            final_output[torch.arange(final_output.size(0)), max_index] = scaled_output[torch.arange(final_output.size(0)), max_index]
+
+        return final_output
 
 
 class Critic(nn.Module):
@@ -51,8 +64,9 @@ class Critic(nn.Module):
         self.stateinput = nn.Linear(in_features=state_dim, out_features=state_hidden1_size)
         self.statehidden = nn.Linear(in_features=state_hidden1_size, out_features=state_hidden2_size)
         self.stateoutput = nn.Linear(in_features=state_hidden2_size, out_features=64)
+        self.dropout = nn.Dropout(p=0.5)
 
-        # 5x64 B
+        # 9x64 B
         self.actioninput = nn.Linear(in_features=action_vector, out_features=64)
         
         # (A+B)128x64 > 64x1
@@ -63,6 +77,7 @@ class Critic(nn.Module):
     def forward(self, state, action_vector):
         x = F.relu(self.stateinput(state))
         x = F.relu(self.statehidden(x))
+        x = self.dropout(x)
         x = F.relu(self.stateoutput(x))
 
         a = F.relu(self.actioninput(action_vector))
